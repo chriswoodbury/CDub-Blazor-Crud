@@ -1,0 +1,117 @@
+﻿@page "/category"
+
+@using CDub_Blazor_Crud.Models
+@using CDub_Blazor_Crud.Repository
+@inject ICategoryRepository _categoryRepository
+@inject IJSRuntime _jsRuntime
+
+
+<div class="row pt-2">
+    <div class="col-6">
+        <h4 class="text-primary">Category List</h4>
+    </div>
+    <div class="col-6 text-end">
+       @* <a asp-controller="Category" asp-action="Create" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> &nbsp; Create New Category
+        </a>*@
+
+        <div class="pt-2">
+            <a href="category/create" class="btn btn-primary"><i class="bi bi-plus-circle"></i> &nbsp; Create New Category</a>
+        </div>
+
+    </div>
+</div>
+<br />
+
+    <div class="col-12 pt-2">
+        @if (Categories.Any())
+        {
+            <table class="table table-bordered table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th>Category Name</th>
+                        <th>Display Order</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var objCat in Categories)
+                    {
+                        <tr>
+                            <td>
+                                @objCat.Name
+                            </td>
+                            <td>@objCat.DisplayOrder</td>
+                            <td>
+                            <NavLink href="@($"category/edit/{objCat.Id}")" class="btn btn-primary"><i class="bi bi-pencil-square"></i> &nbsp; Edit</NavLink>
+                            <NavLink href="@($"category/delete/{objCat.Id}")" class="btn btn-secondary"><i class="bi bi-trash-fill"></i> &nbsp; Delete</NavLink>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+        else
+        {
+            if (IsLoading)
+            {
+                <div class="text-center">
+                    <img src="images/ajax-loader.gif" alt="" />
+                    <br />
+                    loading...
+                </div>
+            }
+            else
+            {
+                <p>No records found.</p>
+            }
+        }
+
+     
+
+    </div>
+
+
+
+@code {
+    private IEnumerable<Category> Categories { get; set; } = new List<Category>();
+    public bool IsLoading { get; set; }
+    private int DeleteCategoryId { get; set; } = 0;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadCategories();
+        }
+    }
+
+    private async Task LoadCategories()
+    {
+        IsLoading = true;
+        StateHasChanged();
+        Categories = await _categoryRepository.GetAll();
+        IsLoading = false;
+        StateHasChanged();
+    }
+
+    private void HandleDelete(int id)
+    {
+        DeleteCategoryId = id;
+        _jsRuntime.InvokeVoidAsync("ShowDeleteConfirmationModal");
+    }
+
+    public async Task ConfirmDelete_Click(bool isConfirmed)
+    {
+        IsLoading = true;
+
+        if (isConfirmed && DeleteCategoryId != 0)
+        {
+            await _categoryRepository.Delete(DeleteCategoryId);
+            await LoadCategories();
+            await _jsRuntime.InvokeVoidAsync("HideDeleteConfirmationModal");
+        }
+
+        IsLoading = false;
+    }
+}

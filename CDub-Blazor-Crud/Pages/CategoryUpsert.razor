@@ -1,0 +1,124 @@
+﻿@page "/category/create"
+@page "/category/edit/{id:int}"
+
+@using CDub_Blazor_Crud.Repository
+@using CDub_Blazor_Crud.Models
+
+@inject ICategoryRepository _categoryRepository
+@inject NavigationManager _navigationManager
+@inject IToastService _toastService
+
+@if (IsLoading)
+{
+    <div class="text-center pt-5">
+        <img src="images/ajax-loader.gif" alt="" />
+        <br />
+        loading...
+    </div>
+}
+else
+{
+
+        <div class="border p-3 mt-4">
+            <div class="row pb-2">
+                <h4 class="text-primary">@TitleHeading Category</h4>
+                <hr />
+            </div>
+   
+            <div class="pt-2"></div>
+
+            <EditForm Model="Category" OnValidSubmit="UpsertCategory">
+
+                <DataAnnotationsValidator />
+
+                @* <ValidationSummary />    *@
+
+                <div class="form-group">
+                    <label>Name</label>
+                    <InputText @bind-Value="Category.Name" id="catName" class="form-control"></InputText>
+                    <ValidationMessage For="()=>Category.Name" />
+                </div>
+
+                <div class="form-group pt-4">
+                    <label>Display Order</label>
+                    <InputNumber @bind-Value="Category.DisplayOrder" class="form-control"></InputNumber>
+                    <ValidationMessage For="()=>Category.DisplayOrder" />
+                </div>
+
+                <div class="form-group pt-4">
+                    <button class="btn btn-primary" style="width: 150px;">@TitleButton</button>
+                    <a href="/category" class="btn btn-secondary" style="width: 150px;">
+                        Back to List
+                    </a>
+                </div>
+
+            </EditForm>
+
+        </div>
+
+}
+
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Category Category { get; set; } = new Category();
+    private string TitleHeading { get; set; } = "Create";
+    private string TitleButton { get; set; } = "Create";
+    private bool IsLoading { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+       //await _jsRuntime.InvokeVoidAsync("focusById", "catName");
+
+        if (firstRender)
+        {
+            if (Id == 0)
+            {
+                IsLoading = false;
+            }
+            else
+            {
+                TitleHeading = "Edit";
+                TitleButton = "Update";
+                await LoadCategory();
+            }
+        }
+    }
+
+    private async Task LoadCategory()
+    {
+        IsLoading = true;
+        StateHasChanged();
+        Category = await _categoryRepository.Get(Id);
+        IsLoading = false;
+        StateHasChanged();
+    }
+
+    private async Task UpsertCategory()
+    {
+        if (Category.Id == 0)
+        {
+            //var cat = _db.Categories.FirstOrDefault(ct => ct.Name == Category.Name);
+            //if (cat != null)
+            //{
+            //    ModelState.AddModelError("name", "This Category already exists.");
+            //}
+
+            //if (obj.Name == obj.DisplayOrder.ToString())
+            //{
+            //    ModelState.AddModelError("name", "The Display Order cannot have the same value as the Name.");
+            //}
+            await _categoryRepository.Create(Category);
+            _toastService.ShowSuccess("Category added successfully.");
+        }
+        else
+        {
+            await _categoryRepository.Update(Category);
+            _toastService.ShowSuccess("Category updated successfully.");
+        }
+
+        _navigationManager.NavigateTo("/category");
+    }
+}
