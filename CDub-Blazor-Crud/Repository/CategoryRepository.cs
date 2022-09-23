@@ -15,7 +15,7 @@ namespace CDub_Blazor_Crud.Repository
 
         public async Task<Category> Create(Category obj)
         {
-            obj.CreatedDateTime = DateTime.Now;
+            //obj.CreatedDateTime = DateTime.Now;
 
             var addedObj = _db.Categories.Add(obj);
             await _db.SaveChangesAsync();
